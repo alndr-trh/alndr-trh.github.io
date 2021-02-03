@@ -1,5 +1,5 @@
 // TODO
-// можно иконки мыши
+// иконки мыши, рефакторинг, относительный размер рамки выделения изображения, взаимодействие со слоями  и вне холста (перетаскивание изображения за видимую область, непрерывное рисование и т.п.) 
 
 let workspaceWidth = 0;
 let workspaceHeight = 0;
@@ -7,6 +7,13 @@ let workspaceHeight = 0;
 //var borderOffset = 2;
 let canvasOffsetX = 0;
 let canvasOffsetY = 0;
+
+let workspaceScale = 1;
+let catchX = 0;
+let catchY = 0;
+let box = document.getElementById('canvasBox');
+let workspaceDiffX = 0;
+let workspaceDiffY = 0;
 
 let importImage = new Image();
 
@@ -100,7 +107,7 @@ function setupProject(firstLayerType) {
     back.style.width = (window.innerWidth).toString() + 'px';
     back.style.height = (window.innerHeight).toString() + 'px';
     if(0.362 * window.innerWidth + workspaceWidth > window.innerWidth) {
-	back.style.width = (0.362 * window.innerWidth + workspaceWidth).toString() + 'px';
+    	back.style.width = (0.362 * window.innerWidth + workspaceWidth).toString() + 'px';
     }
     if(0.05 * window.innerHeight + workspaceHeight > window.innerHeight) {
 	back.style.height = (0.05 * window.innerHeight + workspaceHeight).toString() + 'px';
@@ -118,9 +125,22 @@ function setupProject(firstLayerType) {
     layers[0].cvs.classList.add('canvas-main');
     layers[0].listElem.classList.add('hidden');
 
+
+    //canvasOffsetX = layers[0].cvs.clientLeft;
+    //canvasOffsetY = layers[0].cvs.clientTop;
+
+    
+    //document.getElementById('canvasBox').onmouseover = setCanvasCursor;
+    //document.getElementById('canvasBox').onmouseout = unsetCanvasCursor;
+
+    //document.getElementById('canvasBox').onwheel = zoomWorkspace;
     layers[0].cvs.onmouseover = setCanvasCursor;
     layers[0].cvs.onmouseout = unsetCanvasCursor;
 
+    layers[0].cvs.onwheel = zoomWorkspace;
+    box.onmousedown = catchWorkspace;
+
+    
     if(firstLayerType == 'image') {
 	addLayer('image');
     }
@@ -143,6 +163,78 @@ function setupProject(firstLayerType) {
     document.getElementById('gLvlVal').innerHTML = 'Green level: ' + (parseInt(greenLevel.value, 10)).toString();
     document.getElementById('bLvlVal').innerHTML = 'Blue level: ' + (parseInt(blueLevel.value, 10)).toString();
     document.getElementById('opVal').innerHTML = 'Opacity: ' + (parseInt(opacity.value, 10)).toString() + '%';
+}
+
+// Scaling workspace
+function zoomWorkspace(e) {
+    workspaceScale += e.deltaY * -0.05;
+    let sizeWidth = parseInt(Math.min(Math.max(workspaceWidth / 5.0, workspaceWidth * workspaceScale), workspaceWidth * 5), 10);
+    let sizeHeight = parseInt(Math.min(Math.max(workspaceHeight / 5.0, workspaceHeight * workspaceScale), workspaceHeight * 5), 10);
+    workspaceScale = Math.min(Math.max(0.2, workspaceScale), 5);
+    for(let i = 0; i < layers.length; i++) {
+	layers[i].cvs.style.width = (sizeWidth).toString() + 'px';
+	layers[i].cvs.style.height = (sizeHeight).toString() + 'px';
+    }
+    let cvsBack = document.getElementById('canvasBack');
+    cvsBack.style.width = (sizeWidth).toString() + 'px';
+    cvsBack.style.height = (sizeHeight).toString() + 'px';
+
+    document.getElementById('wpScale').innerHTML = parseInt(workspaceScale*100).toString() + '%';
+}
+
+// Moving workspace
+function catchWorkspace(e) {
+    //console.log('moving workspace');
+    let bounds = layers[0].cvs.getBoundingClientRect();
+    if(!(e.clientX > bounds.x && e.clientX < bounds.x + bounds.width
+	 && e.clientY > bounds.y && e.clientY < bounds.y + bounds.height)) {
+	catchX = e.clientX;
+	catchY = e.clientY;
+	console.log('moving workspace');
+	box.onmousemove = moveWorkspace;
+	box.onmouseup = releaseWorkspace;
+    }
+}
+
+function moveWorkspace(e) {
+    let diffX = e.clientX - catchX;
+    let diffY = e.clientY - catchY;
+    for(let i = 0; i < layers.length; i++) {
+	layers[i].cvs.style.transform = 'translateY(-50%) translateX(-50%) translateX(' + (workspaceDiffX + diffX).toString() + 'px) translateY(' + (workspaceDiffY + diffY).toString() + 'px)';
+    }
+    document.getElementById('canvasBack').style.transform = 'translateY(-50%) translateX(-50%) translateX(' + (workspaceDiffX + diffX).toString() + 'px) translateY(' + (workspaceDiffY + diffY).toString() + 'px)';
+
+    document.getElementById('wpPos').innerHTML = (workspaceDiffX + diffX).toString() + ':' + (workspaceDiffY + diffY).toString();
+}
+
+function releaseWorkspace(e) {
+    workspaceDiffX += e.clientX - catchX;
+    workspaceDiffY += e.clientY - catchY;
+    box.onmousemove = null;
+    box.onmouseup = null;
+}
+
+// Reset workspace scale and position
+document.getElementById('resetBtn').onclick = resetWorkspace;
+
+function resetWorkspace(e) {
+    workspaceDiffX = 0;
+    workspaceDiffY = 0;
+    workspaceScale = 1;
+    let sizeWidth = parseInt(Math.min(Math.max(workspaceWidth / 5.0, workspaceWidth * workspaceScale), workspaceWidth * 5), 10);
+    let sizeHeight = parseInt(Math.min(Math.max(workspaceHeight / 5.0, workspaceHeight * workspaceScale), workspaceHeight * 5), 10);
+    for(let i = 0; i < layers.length; i++) {
+	layers[i].cvs.style.width = (sizeWidth).toString() + 'px';
+	layers[i].cvs.style.height = (sizeHeight).toString() + 'px';
+	layers[i].cvs.style.transform = 'translateY(-50%) translateX(-50%) translateX(' + (workspaceDiffX).toString() + 'px) translateY(' + (workspaceDiffY).toString() + 'px)';
+    }
+    let cvsBack = document.getElementById('canvasBack');
+    cvsBack.style.width = (sizeWidth).toString() + 'px';
+    cvsBack.style.height = (sizeHeight).toString() + 'px';
+    cvsBack.style.transform = 'translateY(-50%) translateX(-50%) translateX(' + (workspaceDiffX + diffX).toString() + 'px) translateY(' + (workspaceDiffY + diffY).toString() + 'px)';
+    
+    document.getElementById('wpScale').innerHTML = parseInt(workspaceScale*100).toString() + '%';
+    document.getElementById('wpPos').innerHTML = (workspaceDiffX).toString() + ':' + (workspaceDiffY).toString();
 }
 
 // Adjust canvas on browser window resizing
@@ -201,8 +293,6 @@ document.getElementById('acceptExportBtn').onclick = function(e) {
 
 let layers = [];
 
-var box = document.getElementById('canvasBox');
-
 var isDrawing = false;
 var isErasing = false;
 
@@ -210,8 +300,7 @@ var isImageMoving = false;
 var isImageScaling = false;
 var isImageRotating = false;
 
-var catchX = 0;
-var catchY = 0;
+
 var diffX = 0;
 var diffY = 0;
 var angle = 0;
@@ -250,8 +339,14 @@ function catchImage(e) {
 	layers[currCanvIdx].img.width + 6,
 	layers[currCanvIdx].img.height + 6);
 
-    let tempX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft;
-    let tempY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop;
+    //let tempX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft;
+    //let tempY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop;
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    let tempX = (e.clientX - bounds.x) / workspaceScale;
+    let tempY = (e.clientY - bounds.y) / workspaceScale;
+    //console.log(e.pageX);
+    //console.log(layers[0].cvs.getBoundingClientRect());
+    //console.log(workspaceScale);
 
     tempX -= centreX;
     tempY -= centreY;
@@ -301,8 +396,11 @@ function catchImage(e) {
 };
 
 function moveImage(e) {
-    diffX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft - catchX;
-    diffY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop - catchY;
+    //diffX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft - catchX;
+    //diffY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop - catchY;
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    diffX = (e.clientX - bounds.x) / workspaceScale - catchX;
+    diffY = (e.clientY - bounds.y) / workspaceScale - catchY;
     
     let centreX = layers[currCanvIdx].xPos + layers[currCanvIdx].img.width/2 + diffX;
     let centreY = layers[currCanvIdx].yPos + layers[currCanvIdx].img.height/2 + diffY; 
@@ -343,9 +441,12 @@ function moveImage(e) {
     //layers[currCanvIdx].ctx.resetTransform();
 }
 
-function scaleImage(e) {    
-    let tempX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft - catchX;
-    let tempY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop - catchY;
+function scaleImage(e) {
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    let tempX = (e.clientX - bounds.x) / workspaceScale - catchX;
+    let tempY = (e.clientY - bounds.y) / workspaceScale - catchY;
+    //let tempX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft - catchX;
+    //let tempY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop - catchY;
 
     //let centreX = layers[currCanvIdx].xPos + layers[currCanvIdx].img.width/2;
     //let centreY = layers[currCanvIdx].yPos + layers[currCanvIdx].img.height/2;
@@ -440,8 +541,11 @@ function scaleImage(e) {
 }
 
 function rotateImage(e) {
-    let currX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft;
-    let currY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop;
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    let currX = (e.clientX - bounds.x) / workspaceScale;
+    let currY = (e.clientY - bounds.y) / workspaceScale;
+    //let currX = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft;
+    //let currY = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop;
 
     let centreX = layers[currCanvIdx].xPos + layers[currCanvIdx].img.width/2;
     let centreY = layers[currCanvIdx].yPos + layers[currCanvIdx].img.height/2;
@@ -871,9 +975,11 @@ function selectLayer(id) {
 	    currCanvIdx = idx;
 	    //layers[currCanvIdx].ctx.strokeStyle = cp.value + parseInt(brushTransp.value, 10).toString(16);
 	    //layers[currCanvIdx].ctx.lineWidth = brushSize.value;
-	    layers[0].cvs.style.zIndex = -currCanvIdx+1;
+	    //layers[0].cvs.style.zIndex = parseInt(layers[currCanvIdx].cvs.style.zIndex, 10) + 1;
 	    
 	    if(layers[currCanvIdx].type == 'drawing') {
+		layers[0].cvs.style.zIndex = parseInt(layers[currCanvIdx].cvs.style.zIndex, 10) + 1;
+		
 		layers[0].ctx.setLineDash([]);
 		
 		if(prevType != 'drawing') {
@@ -925,7 +1031,8 @@ function selectLayer(id) {
 		}
 	    }
 	    else if(layers[currCanvIdx].type == 'image') {
-		
+		layers[0].cvs.style.zIndex = 0;
+
 		let centreX = layers[currCanvIdx].xPos + layers[currCanvIdx].img.width / 2;
 		let centreY = layers[currCanvIdx].yPos + layers[currCanvIdx].img.height / 2;
 		layers[currCanvIdx].transform[4] = centreX;
@@ -1024,9 +1131,9 @@ function selectLayer(id) {
 		    layers[0].cvs.onmouseup = releaseImage;
 		}
 	    }
-	    document.getElementById('currLayer').innerHTML = layers[currCanvIdx].listElem.firstChild.innerHTML;
-	    console.log('layer' + currCanvIdx);
 	}
+	document.getElementById('currLayer').innerHTML = layers[currCanvIdx].listElem.firstChild.innerHTML;
+	//console.log('layer' + currCanvIdx);
     }
 };
 
@@ -1056,6 +1163,13 @@ function createLayer(type) {
     cvs.height = workspaceHeight;
     cvs.classList.add('canvas');
     cvs.style.zIndex = -maxId;
+
+    let sizeWidth = parseInt(Math.min(Math.max(workspaceWidth / 5.0, workspaceWidth * workspaceScale), workspaceWidth * 5), 10);
+    let sizeHeight = parseInt(Math.min(Math.max(workspaceHeight / 5.0, workspaceHeight * workspaceScale), workspaceHeight * 5), 10);
+    cvs.style.width = (sizeWidth).toString() + 'px';
+    cvs.style.height = (sizeHeight).toString() + 'px';
+    cvs.style.transform = 'translateY(-50%) translateX(-50%) translateX(' + (workspaceDiffX).toString() + 'px) translateY(' + (workspaceDiffY).toString() + 'px)';
+    
     
     let listElem = document.createElement('div');
     listElem.id = cvs.id;
@@ -1118,9 +1232,9 @@ function createLayer(type) {
 	yPos = (workspaceHeight - img.height) / 2;
 	ctx.drawImage(img, xPos, yPos);
 
-	//imgCtx.imageSmoothingEnabled = false;
+	imgCtx.imageSmoothingEnabled = false;
     }
-    //ctx.imageSmoothingEnabled = false;
+    ctx.imageSmoothingEnabled = false;
 
     
     return {
@@ -1153,12 +1267,13 @@ function createLayer(type) {
 function removeLayer(e) {
     if(layers.length > 2) {
 	let id = parseInt(this.parentNode.parentNode.id, 10);
-		console.log(id);
+	this.parentNode.parentNode.onclick = null;
+	console.log(id);
 	let idx = getLayerIdxById(id);
 	layers[idx].listElem.remove();
 	layers[idx].cvs.remove();
 	layers.splice(idx, 1);
-
+	
 	if(idx > 1) {
 	    currCanvIdx = idx-1;
 	}
@@ -1262,10 +1377,12 @@ function paint(e) {
     
     var imd = layers[currCanvIdx].ctx.getImageData(0, 0, workspaceWidth, workspaceHeight);
     var drawingBoundTop = 0;
-    var startClr = layers[currCanvIdx].ctx.getImageData(parseInt(e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft, 10), parseInt(e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop, 10), 1, 1);
+    
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    var startClr = layers[currCanvIdx].ctx.getImageData(parseInt((e.clientX - bounds.x) / workspaceScale, 10), parseInt((e.clientY - bounds.y) / workspaceScale, 10), 1, 1);
     var targetClr = [ parseInt('0x'+cp.value[1]+cp.value[2]), parseInt('0x'+cp.value[3]+cp.value[4]), parseInt('0x'+cp.value[5]+cp.value[6]),  parseInt(brushTransp.value, 10) ];
 
-    pixelStack = [[parseInt(e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft, 10), parseInt(e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop, 10)]];
+    pixelStack = [[parseInt((e.clientX - bounds.x) / workspaceScale, 10), parseInt((e.clientY - bounds.y) / workspaceScale, 10)]];
 
     if(startClr.data[0] == targetClr[0] && startClr.data[1] == targetClr[1] && startClr.data[2] == targetClr[2] && startClr.data[3] == targetClr[3]) {
 	return;
@@ -1372,9 +1489,10 @@ function prepareErase(e) {
     applyBrushStyle();
     layers[0].ctx.strokeStyle = cp.value + parseInt(255, 10).toString(16);
     layers[currCanvIdx].ctx.strokeStyle = cp.value + parseInt(255, 10).toString(16);
-    
-    x = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft;
-    y = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop;
+
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    x = (e.clientX - bounds.x) / workspaceScale;
+    y = (e.clientY - bounds.y) / workspaceScale;
     layers[currCanvIdx].ctx.beginPath();
     layers[currCanvIdx].ctx.moveTo(x, y);
     layers[currCanvIdx].ctx.stroke();
@@ -1386,17 +1504,18 @@ function erase(e) {
     layers[0].ctx.shadowBlur = 0;
     layers[0].ctx.clearRect(0, 0, layers[0].ctx.canvas.width, layers[0].ctx.canvas.height);
     layers[0].ctx.beginPath();
-    layers[0].ctx.arc(e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft,
-		    e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop,
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    layers[0].ctx.arc((e.clientX - bounds.x) / workspaceScale,
+		    (e.clientY - bounds.y) / workspaceScale,
 		    parseInt(brushSize.value) / 2, 0, 2 * Math.PI, false);
     layers[0].ctx.stroke();
     if (isErasing) {
 	layers[currCanvIdx].ctx.beginPath();
 	layers[currCanvIdx].ctx.moveTo(x, y);
-	layers[currCanvIdx].ctx.lineTo(e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft, e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop);
+	layers[currCanvIdx].ctx.lineTo((e.clientX - bounds.x) / workspaceScale, (e.clientY - bounds.y) / workspaceScale);
 	layers[currCanvIdx].ctx.stroke();
-	x = e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft;
-	y = e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop;
+	x = (e.clientX - bounds.x) / workspaceScale;
+	y = (e.clientY - bounds.y) / workspaceScale;
     }
 };
 
@@ -1460,14 +1579,16 @@ function applyBrushStyle() {
 function prepareBrush(e) {
     isDrawing = true;
     applyBrushStyle();
-    x = [e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft];
-    y = [e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop];
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
+    x = [(e.clientX - bounds.x) / workspaceScale];
+    y = [(e.clientY - bounds.y) / workspaceScale];
 };
 
 function brush(e) {
+    let bounds = layers[currCanvIdx].cvs.getBoundingClientRect();
     if (isDrawing) {
-	x.push(e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft);
-        y.push(e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop);
+	x.push((e.clientX - bounds.x) / workspaceScale);
+        y.push((e.clientY - bounds.y) / workspaceScale);
         layers[0].ctx.clearRect(0, 0, layers[0].ctx.canvas.width, layers[0].ctx.canvas.height);
         drawStroke(layers[0].ctx);
     }
@@ -1477,8 +1598,8 @@ function brush(e) {
 	layers[0].ctx.shadowBlur = 0;
         layers[0].ctx.clearRect(0, 0, layers[0].ctx.canvas.width, layers[0].ctx.canvas.height);
 	layers[0].ctx.beginPath();
-	layers[0].ctx.arc(e.pageX - canvasOffsetX - layers[currCanvIdx].cvs.offsetLeft,
-			e.pageY - canvasOffsetY - layers[currCanvIdx].cvs.offsetTop,
+	layers[0].ctx.arc((e.clientX - bounds.x) / workspaceScale,
+			(e.clientY - bounds.y) / workspaceScale,
 			parseInt(brushSize.value) / 2, 0, 2 * Math.PI, false);
 	layers[0].ctx.stroke();
     }
