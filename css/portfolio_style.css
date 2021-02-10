@@ -1,0 +1,167 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    position: fixed;
+    font-size: 100%;
+}
+
+.content-container {
+    width: 80%;
+    height: 100%;
+    margin: auto;
+    display: grid;
+    grid-template-rows: 1fr 1fr 5fr 0.5fr;
+    grid-template-columns: 100%;
+    grid-template-areas:
+	"."
+	"welcome-text"
+	"projects"
+	".";
+}
+
+.welcome-text {
+    display: inline;
+    vertical-align: middle;
+    grid-area: welcome-text;
+}
+
+.little-text {
+    text-align: center;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.name-text {
+    text-align: center;
+    vertical-align: middle;
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 0px;
+}
+
+.beauti-text {
+    font-style: italic;
+    font-weight: normal;
+}
+
+.projects-container {
+    grid-area: projects;
+    display: grid;
+    grid-template-rows: auto;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-areas:
+	"blog-proj blog-proj game-proj game-proj"
+	". soie-proj soie-proj .";
+}
+
+.project-name {
+    font-weight: bold;
+    color: black;
+}
+
+.project {
+    background-blend-mode: overlay;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes float-bg {
+    from {
+	background-position: 15% 15%;
+    }
+    to {
+	background-position: 85% 85%;
+    }
+}
+
+.project-further {
+    background-size: 150%;
+    animation-duration: 0.3s, 10s;
+    animation-name: furhter, float-bg;
+    animation-iteration-count: 1, infinite;
+    animation-direction: normal, alternate;
+    margin: auto;
+    border: 1px solid black;
+    border-radius: 3px;
+    height: 80%;
+    width: 70%;
+    font-size: 1.6rem;
+}
+
+@keyframes furhter {
+    from {
+	height: 90%;
+	width: 80%;
+	font-size: 4rem;
+	background-size: 100%;
+    }
+    to {
+	height: 80%;
+	width: 70%;
+	font-size: 1.6rem;
+	background-size: 150%;
+    }	
+}
+
+.project-closer {
+    background-size: 100%;
+    animation-duration: 0.3s, 10s;
+    animation-name: closer, float-bg;
+    animation-iteration-count: 1, infinite;
+    animation-direction: normal, alternate;
+    margin: auto;
+    border: 1px solid black;
+    border-radius: 3px;
+    height: 90%;
+    width: 80%;
+    font-size: 4rem;
+}
+
+@keyframes closer {
+    from {
+	height: 80%;
+	width: 70%;
+	font-size: 1.6rem;
+	background-size: 150%;
+    }
+    to {
+	height: 90%;
+	width: 80%;
+	font-size: 4rem;
+	background-size: 100%;
+    }
+}
+
+@media (max-width: 765px) {
+    html, body {
+	font-size: 65%;
+    }
+    .content-container {
+	width: 90%;
+    }
+    .projects-container {
+	grid-template-rows: 1fr 1fr 1fr;
+	grid-template-columns: auto;
+	grid-template-areas:
+	    "blog-proj"
+	    "game-proj"
+	    "soie-proj";
+    }
+}
+
+@media (max-height: 600px) and (min-width: 766px) {
+    html, body {
+	font-size: 65%;
+    }
+    .content-container {
+	width: 90%;
+    }
+    .projects-container {
+	grid-template-rows: auto;
+	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-areas:
+	    "blog-proj game-proj soie-proj";
+    }
+}

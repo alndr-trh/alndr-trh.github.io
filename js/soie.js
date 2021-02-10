@@ -1,5 +1,5 @@
 // TODO
-// иконки мыши, рефакторинг, относительный размер рамки выделения изображения, взаимодействие со слоями  и вне холста (перетаскивание изображения за видимую область, непрерывное рисование и т.п.) 
+// иконки мыши, рефакторинг, относительный размер рамки выделения изображения, взаимодействие со слоями  и вне холста (перетаскивание изображения за видимую область, непрерывное рисование и т.п.), убрать черную линию по-середине на фоне создания проекта
 
 let workspaceWidth = 0;
 let workspaceHeight = 0;
@@ -116,6 +116,7 @@ function setupProject(firstLayerType) {
     let cvsBack = document.getElementById('canvasBack');
     cvsBack.style.width = workspaceWidth.toString() + 'px';
     cvsBack.style.height = workspaceHeight.toString() + 'px';
+    cvsBack.style.border = 'solid 1px black';
 
     canvasOffsetX = 0.18 * window.innerWidth;
     canvasOffsetY = 0.03 * window.innerHeight - 5;
@@ -966,171 +967,160 @@ document.getElementById('newLayerBut').onclick = function(e) {
 function selectLayer(id) {
     let idx = getLayerIdxById(id);
     if(idx != null) {
-	if(idx != currCanvIdx) {
-	    layers[0].ctx.resetTransform();
-	    layers[0].ctx.clearRect(0, 0, workspaceWidth, workspaceHeight);
+	layers[0].ctx.resetTransform();
+	layers[0].ctx.clearRect(0, 0, workspaceWidth, workspaceHeight);
+	
+	currCanvIdx = idx;
 
-	    let prevType = layers[currCanvIdx].type;
+	if(layers[currCanvIdx].type == 'drawing') {
+	    layers[0].cvs.style.zIndex = parseInt(layers[currCanvIdx].cvs.style.zIndex, 10) + 1;
 	    
-	    currCanvIdx = idx;
-	    //layers[currCanvIdx].ctx.strokeStyle = cp.value + parseInt(brushTransp.value, 10).toString(16);
-	    //layers[currCanvIdx].ctx.lineWidth = brushSize.value;
-	    //layers[0].cvs.style.zIndex = parseInt(layers[currCanvIdx].cvs.style.zIndex, 10) + 1;
+	    layers[0].ctx.setLineDash([]);
 	    
-	    if(layers[currCanvIdx].type == 'drawing') {
-		layers[0].cvs.style.zIndex = parseInt(layers[currCanvIdx].cvs.style.zIndex, 10) + 1;
-		
-		layers[0].ctx.setLineDash([]);
-		
-		if(prevType != 'drawing') {
-		    selectBrushTool();
+	    selectBrushTool();
 
-		    invClrBtn.parentNode.classList.add('disabled');
-		    opacity.classList.remove('interface-range');
-		    brightness.classList.remove('interface-range');
-		    contrast.classList.remove('interface-range');
-		    exposure.classList.remove('interface-range');
-		    rLvl.classList.remove('interface-range');
-		    gLvl.classList.remove('interface-range');
-		    bLvl.classList.remove('interface-range');
-		    opacity.classList.add('interface-range-disabled');
-		    brightness.classList.add('interface-range-disabled');
-		    contrast.classList.add('interface-range-disabled');
-		    exposure.classList.add('interface-range-disabled');
-		    rLvl.classList.add('interface-range-disabled');
-		    gLvl.classList.add('interface-range-disabled');
-		    bLvl.classList.add('interface-range-disabled');
+	    invClrBtn.parentNode.classList.add('disabled');
+	    opacity.classList.remove('interface-range');
+	    brightness.classList.remove('interface-range');
+	    contrast.classList.remove('interface-range');
+	    exposure.classList.remove('interface-range');
+	    rLvl.classList.remove('interface-range');
+	    gLvl.classList.remove('interface-range');
+	    bLvl.classList.remove('interface-range');
+	    opacity.classList.add('interface-range-disabled');
+	    brightness.classList.add('interface-range-disabled');
+	    contrast.classList.add('interface-range-disabled');
+	    exposure.classList.add('interface-range-disabled');
+	    rLvl.classList.add('interface-range-disabled');
+	    gLvl.classList.add('interface-range-disabled');
+	    bLvl.classList.add('interface-range-disabled');
 
-		    invClrBtn.disabled = true;
-		    opacity.disabled = true;
-		    brightness.disabled = true;
-		    contrast.disabled = true;
-		    exposure.disabled = true;
-		    rLvl.disabled = true;
-		    gLvl.disabled = true;
-		    bLvl.disabled = true;
+	    invClrBtn.disabled = true;
+	    opacity.disabled = true;
+	    brightness.disabled = true;
+	    contrast.disabled = true;
+	    exposure.disabled = true;
+	    rLvl.disabled = true;
+	    gLvl.disabled = true;
+	    bLvl.disabled = true;
 
-		    brushSize.classList.remove('interface-range-disabled');
-		    brushTransp.classList.remove('interface-range-disabled');
-		    brushShad.classList.remove('interface-range-disabled');
-		    brushSize.classList.add('interface-range');
-		    brushTransp.classList.add('interface-range');
-		    brushShad.classList.add('interface-range');
-		    er.parentNode.classList.remove('disabled');
-		    br.parentNode.classList.remove('disabled');
-		    bkt.parentNode.classList.remove('disabled');
-		    cp.parentNode.classList.remove('disabled');
+	    brushSize.classList.remove('interface-range-disabled');
+	    brushTransp.classList.remove('interface-range-disabled');
+	    brushShad.classList.remove('interface-range-disabled');
+	    brushSize.classList.add('interface-range');
+	    brushTransp.classList.add('interface-range');
+	    brushShad.classList.add('interface-range');
+	    er.parentNode.classList.remove('disabled');
+	    br.parentNode.classList.remove('disabled');
+	    bkt.parentNode.classList.remove('disabled');
+	    cp.parentNode.classList.remove('disabled');
 
-		    brushSize.disabled = false;
-		    brushTransp.disabled = false;
-		    brushShad.disabled = false;
-		    er.disabled = false;
-		    br.disabled = false;
-		    bkt.disabled = false;
-		    cp.disabled = false;
-		}
-	    }
-	    else if(layers[currCanvIdx].type == 'image') {
-		layers[0].cvs.style.zIndex = 0;
+	    brushSize.disabled = false;
+	    brushTransp.disabled = false;
+	    brushShad.disabled = false;
+	    er.disabled = false;
+	    br.disabled = false;
+	    bkt.disabled = false;
+	    cp.disabled = false;
+	}
+	else if(layers[currCanvIdx].type == 'image') {
+	    layers[0].cvs.style.zIndex = 0;
 
-		let centreX = layers[currCanvIdx].xPos + layers[currCanvIdx].img.width / 2;
-		let centreY = layers[currCanvIdx].yPos + layers[currCanvIdx].img.height / 2;
-		layers[currCanvIdx].transform[4] = centreX;
-		layers[currCanvIdx].transform[5] = centreY;
+	    let centreX = layers[currCanvIdx].xPos + layers[currCanvIdx].img.width / 2;
+	    let centreY = layers[currCanvIdx].yPos + layers[currCanvIdx].img.height / 2;
+	    layers[currCanvIdx].transform[4] = centreX;
+	    layers[currCanvIdx].transform[5] = centreY;
 
-		layers[0].ctx.setTransform(
-		    layers[currCanvIdx].transform[0],
-		    layers[currCanvIdx].transform[1],
-		    layers[currCanvIdx].transform[2],
-		    layers[currCanvIdx].transform[3],
-		    layers[currCanvIdx].transform[4],
-		    layers[currCanvIdx].transform[5]);
-		
-		layers[currCanvIdx].ctx.setTransform(
-		    layers[currCanvIdx].transform[0],
-		    layers[currCanvIdx].transform[1],
-		    layers[currCanvIdx].transform[2],
-		    layers[currCanvIdx].transform[3],
-		    layers[currCanvIdx].transform[4],
-		    layers[currCanvIdx].transform[5]);
+	    layers[0].ctx.setTransform(
+		layers[currCanvIdx].transform[0],
+		layers[currCanvIdx].transform[1],
+		layers[currCanvIdx].transform[2],
+		layers[currCanvIdx].transform[3],
+		layers[currCanvIdx].transform[4],
+		layers[currCanvIdx].transform[5]);
+	    
+	    layers[currCanvIdx].ctx.setTransform(
+		layers[currCanvIdx].transform[0],
+		layers[currCanvIdx].transform[1],
+		layers[currCanvIdx].transform[2],
+		layers[currCanvIdx].transform[3],
+		layers[currCanvIdx].transform[4],
+		layers[currCanvIdx].transform[5]);
 
-		layers[0].ctx.setLineDash([4, 2]);
-		layers[0].ctx.lineWidth = 3;
-		layers[0].ctx.strokeStyle = '#000000FF';
-		layers[0].ctx.strokeRect(
-		    -layers[currCanvIdx].img.width/2,
-		    -layers[currCanvIdx].img.height/2,
-		    layers[currCanvIdx].img.width,
-		    layers[currCanvIdx].img.height);
-		
-		if(prevType != 'image') {
-		    invClrBtn.parentNode.classList.remove('disabled');
-		    opacity.classList.add('interface-range');
-		    brightness.classList.add('interface-range');
-		    contrast.classList.add('interface-range');
-		    exposure.classList.add('interface-range');
-		    rLvl.classList.add('interface-range');
-		    gLvl.classList.add('interface-range');
-		    bLvl.classList.add('interface-range');
-		    opacity.classList.remove('interface-range-disabled');
-		    brightness.classList.remove('interface-range-disabled');
-		    contrast.classList.remove('interface-range-disabled');
-		    exposure.classList.remove('interface-range-disabled');
-		    rLvl.classList.remove('interface-range-disabled');
-		    gLvl.classList.remove('interface-range-disabled');
-		    bLvl.classList.remove('interface-range-disabled');
+	    layers[0].ctx.setLineDash([4, 2]);
+	    layers[0].ctx.lineWidth = 3;
+	    layers[0].ctx.strokeStyle = '#000000FF';
+	    layers[0].ctx.strokeRect(
+		-layers[currCanvIdx].img.width/2,
+		-layers[currCanvIdx].img.height/2,
+		layers[currCanvIdx].img.width,
+		layers[currCanvIdx].img.height);
+	    
+	    invClrBtn.parentNode.classList.remove('disabled');
+	    opacity.classList.add('interface-range');
+	    brightness.classList.add('interface-range');
+	    contrast.classList.add('interface-range');
+	    exposure.classList.add('interface-range');
+	    rLvl.classList.add('interface-range');
+	    gLvl.classList.add('interface-range');
+	    bLvl.classList.add('interface-range');
+	    opacity.classList.remove('interface-range-disabled');
+	    brightness.classList.remove('interface-range-disabled');
+	    contrast.classList.remove('interface-range-disabled');
+	    exposure.classList.remove('interface-range-disabled');
+	    rLvl.classList.remove('interface-range-disabled');
+	    gLvl.classList.remove('interface-range-disabled');
+	    bLvl.classList.remove('interface-range-disabled');
 
-		    invClrBtn.disabled = false;
-		    opacity.disabled = false;
-		    brightness.disabled = false;
-		    contrast.disabled = false;
-		    exposure.disabled = false;
-		    rLvl.disabled = false;
-		    gLvl.disabled = false;
-		    bLvl.disabled = false;
-		    opacity.value = layers[currCanvIdx].effects.opacity;
-		    brightness.value = layers[currCanvIdx].effects.brightness;
-		    contrast.value = layers[currCanvIdx].effects.contrast;
-		    exposure.value = layers[currCanvIdx].effects.exposure;
-		    rLvl.value = layers[currCanvIdx].effects.redLevel;
-		    gLvl.value = layers[currCanvIdx].effects.greenLevel;
-		    bLvl.value = layers[currCanvIdx].effects.blueLevel;
-		    document.getElementById('brightVal').innerHTML = 'Brightness: ' + brightness.value;
-		    document.getElementById('contrVal').innerHTML = 'Contrast: ' + contrast.value;
-		    document.getElementById('expVal').innerHTML = 'Exposure: ' + (parseInt(exposure.value, 10) / 10.0).toString();
-		    document.getElementById('rLvlVal').innerHTML = 'Red level: ' + (parseInt(rLvl.value, 10)).toString();
-		    document.getElementById('gLvlVal').innerHTML = 'Green level: ' + (parseInt(gLvl.value, 10)).toString();
-		    document.getElementById('bLvlVal').innerHTML = 'Blue level: ' + (parseInt(bLvl.value, 10)).toString();
-		    document.getElementById('opVal').innerHTML = 'Opacity: ' + (parseInt(opacity.value, 10)).toString() + '%';
+	    invClrBtn.disabled = false;
+	    opacity.disabled = false;
+	    brightness.disabled = false;
+	    contrast.disabled = false;
+	    exposure.disabled = false;
+	    rLvl.disabled = false;
+	    gLvl.disabled = false;
+	    bLvl.disabled = false;
+	    opacity.value = layers[currCanvIdx].effects.opacity;
+	    brightness.value = layers[currCanvIdx].effects.brightness;
+	    contrast.value = layers[currCanvIdx].effects.contrast;
+	    exposure.value = layers[currCanvIdx].effects.exposure;
+	    rLvl.value = layers[currCanvIdx].effects.redLevel;
+	    gLvl.value = layers[currCanvIdx].effects.greenLevel;
+	    bLvl.value = layers[currCanvIdx].effects.blueLevel;
+	    document.getElementById('brightVal').innerHTML = 'Brightness: ' + brightness.value;
+	    document.getElementById('contrVal').innerHTML = 'Contrast: ' + contrast.value;
+	    document.getElementById('expVal').innerHTML = 'Exposure: ' + (parseInt(exposure.value, 10) / 10.0).toString();
+	    document.getElementById('rLvlVal').innerHTML = 'Red level: ' + (parseInt(rLvl.value, 10)).toString();
+	    document.getElementById('gLvlVal').innerHTML = 'Green level: ' + (parseInt(gLvl.value, 10)).toString();
+	    document.getElementById('bLvlVal').innerHTML = 'Blue level: ' + (parseInt(bLvl.value, 10)).toString();
+	    document.getElementById('opVal').innerHTML = 'Opacity: ' + (parseInt(opacity.value, 10)).toString() + '%';
 
-		    er.parentNode.style.backgroundColor = '#c2c2c1';
-		    br.parentNode.style.backgroundColor = '#c3c2c1';
-		    bkt.parentNode.style.backgroundColor = '#c3c2c1';
-		    
-		    brushSize.classList.add('interface-range-disabled');
-		    brushTransp.classList.add('interface-range-disabled');
-		    brushShad.classList.add('interface-range-disabled');
-		    brushSize.classList.remove('interface-range');
-		    brushTransp.classList.remove('interface-range');
-		    brushShad.classList.remove('interface-range');
-		    er.parentNode.classList.add('disabled');
-		    br.parentNode.classList.add('disabled');
-		    bkt.parentNode.classList.add('disabled');
-		    cp.parentNode.classList.add('disabled');
+	    er.parentNode.style.backgroundColor = '#c2c2c1';
+	    br.parentNode.style.backgroundColor = '#c3c2c1';
+	    bkt.parentNode.style.backgroundColor = '#c3c2c1';
+	    
+	    brushSize.classList.add('interface-range-disabled');
+	    brushTransp.classList.add('interface-range-disabled');
+	    brushShad.classList.add('interface-range-disabled');
+	    brushSize.classList.remove('interface-range');
+	    brushTransp.classList.remove('interface-range');
+	    brushShad.classList.remove('interface-range');
+	    er.parentNode.classList.add('disabled');
+	    br.parentNode.classList.add('disabled');
+	    bkt.parentNode.classList.add('disabled');
+	    cp.parentNode.classList.add('disabled');
 
-		    brushSize.disabled = true;
-		    brushTransp.disabled = true;
-		    brushShad.disabled = true;
-		    er.disabled = true;
-		    br.disabled = true;
-		    bkt.disabled = true;
-		    cp.disabled = true;
+	    brushSize.disabled = true;
+	    brushTransp.disabled = true;
+	    brushShad.disabled = true;
+	    er.disabled = true;
+	    br.disabled = true;
+	    bkt.disabled = true;
+	    cp.disabled = true;
 
-		    layers[0].cvs.onmousedown = catchImage;
-		    layers[0].cvs.onmousemove = null;
-		    layers[0].cvs.onmouseup = releaseImage;
-		}
-	    }
+	    layers[0].cvs.onmousedown = catchImage;
+	    layers[0].cvs.onmousemove = null;
+	    layers[0].cvs.onmouseup = releaseImage;
 	}
 	document.getElementById('currLayer').innerHTML = layers[currCanvIdx].listElem.firstChild.innerHTML;
 	//console.log('layer' + currCanvIdx);
@@ -1201,10 +1191,10 @@ function createLayer(type) {
     listElem.appendChild(document.createElement('br'));
     let btnGroup = document.createElement('div');
     btnGroup.classList.add('interface-button-group');
-    btnGroup.appendChild(createIconButton(moveLayerUp, 'arrow-up-icon.png', 'up'));
-    btnGroup.appendChild(createIconButton(toggleLayerHideness, 'eye-icon.png', 'show/hide'));
-    btnGroup.appendChild(createIconButton(moveLayerDown, 'arrow-down-icon.png', 'down'));
-    btnGroup.appendChild(createIconButton(removeLayer, 'cross-icon.png', 'remove'));
+    btnGroup.appendChild(createIconButton(moveLayerUp, 'img/arrow-up-icon.png', 'up'));
+    btnGroup.appendChild(createIconButton(toggleLayerHideness, 'img/eye-icon.png', 'show/hide'));
+    btnGroup.appendChild(createIconButton(moveLayerDown, 'img/arrow-down-icon.png', 'down'));
+    btnGroup.appendChild(createIconButton(removeLayer, 'img/cross-icon.png', 'remove'));
     listElem.appendChild(btnGroup);
     listElem.appendChild(document.createElement('br'));
     
@@ -1235,7 +1225,6 @@ function createLayer(type) {
 	imgCtx.imageSmoothingEnabled = false;
     }
     ctx.imageSmoothingEnabled = false;
-
     
     return {
 	cvs,
@@ -1268,19 +1257,17 @@ function removeLayer(e) {
     if(layers.length > 2) {
 	let id = parseInt(this.parentNode.parentNode.id, 10);
 	this.parentNode.parentNode.onclick = null;
-	console.log(id);
 	let idx = getLayerIdxById(id);
 	layers[idx].listElem.remove();
 	layers[idx].cvs.remove();
 	layers.splice(idx, 1);
 	
 	if(idx > 1) {
-	    currCanvIdx = idx-1;
+	    selectLayer(layers[idx-1].cvs.id);
 	}
 	else {
-	    currCanvIdx = idx;
+	    selectLayer(layers[idx].cvs.id);
 	}
-	selectLayer(layers[currCanvIdx].cvs.id);
     }
 }
 

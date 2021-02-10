@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SOIE</title>
+    <link rel="stylesheet" href="css/soie_style.css">
+  </head>
+  <body>
+    <div class='interface-container'>
+      <div class='interface-layering-container'>
+	<div id='layer-list'>
+	  <label class='interface-current-layer' id='currLayer'>layer 1</label>
+	  <table class='interface-workspace-info'>
+	    <tr>
+	      <th style='width:50%;' id='wpScale'>100%</th>
+	      <th style='width:50%;' id='wpPos'>0:0</th>
+	    </tr>
+	  </table>
+	  <label class='interface-button-label'>Reset<button id='resetBtn'></button></label>
+	  <label class='interface-button-label'>Export<button id='exportBtn'></button></label>
+
+	  <label class='interface-button-label'>Image<input type="file" id='inputImg' accept="image/*,.pdf"></label>
+
+	  <label class='interface-button-label'>Drawing<button id='newLayerBut'></button></label>
+	</div>
+      </div>
+      <div class='interface-edit-container'>
+	<div class='interface-edit-box'>
+	  <div class='interface-button-group'>
+	    <label style='width:32%'>Eraser<button id='er'></button></label><label style='width:32%'>Brush<button id='br'></button></label><label style='width:32%'>Bucket<button id='bkt'></button></label>
+	  </div>
+	  <br>
+	  <label class='interface-button-label'>
+	    Color: <div id='clrVal'>value</div>
+	    <input type='color' id='cp'>
+	  </label>
+	  <p class='interface-range-value' id='brsVal'>Size in pixels: 10</p>
+	  <input type='range' class='interface-range' id='brushSize' min='1' max='100' value='10'>
+	  <p class='interface-range-value' id='brtVal'>Transparecy: 255</p>
+	  <input type='range' class='interface-range' id='brushTransp' min='0' max='255' value='255'>
+	  <p class='interface-range-value' id='brhVal'>Shadowness: 0%</p>
+	  <input type='range' class='interface-range' id='brushShad' min='0' max='30' value='0'>
+	  <br>
+	  <br>
+	  <label class='interface-button-label'>Invert colors<button id='invClrBtn'></button></label>
+	  <p class='interface-range-value' id='opVal'>Opacity: 100%</p>
+	  <input type='range' class='interface-range' id='opacity' min='0' max='100' value='100'>
+	  <p class='interface-range-value' id='brightVal'>Brightness: 0</p>
+	  <input type='range' class='interface-range' id='brightness' min='-100' max='100' value='0'>
+	  <p class='interface-range-value' id='contrVal'>Contrast: 0</p>
+	  <input type='range' class='interface-range' id='contrast' min='-100' max='100' value='0'>
+	  <p class='interface-range-value' id='expVal'>Exposure: 0</p>
+	  <input type='range' class='interface-range' id='exposure' min='-30' max='30' value='0'>
+	  <p class='interface-range-value' id='rLvlVal'>Red level: 0</p>
+	  <input type='range' class='interface-range' id='rLvl' min='-100' max='100' value='0'>
+	  <p class='interface-range-value' id='gLvlVal'>Green level: 0</p>
+	  <input type='range' class='interface-range' id='gLvl' min='-100' max='100' value='0'>
+	  <p class='interface-range-value' id='bLvlVal'>Blue level: 0</p>
+	  <input type='range' class='interface-range' id='bLvl' min='-100' max='100' value='0'>
+	</div>
+      </div>
+      <div class='interface-canvas-container'>
+	<div class='interface-canvas-group' id='canvasBox'>
+	  <div class='interface-canvas-background' id='canvasBack'>
+	  </div>
+	</div>
+      </div>
+
+    </div>
+    
+    
+
+    <div class='interface-background' id='back'>
+    </div>
+
+      <!-- The Modal -->
+    <div id="openingModal" class="modal-screen">
+      <!-- Modal content -->
+      <div class="modal-box">
+	<div class='modal-content'>
+	  <p>Welcome to SOIE - simple online image editor</p>
+	</div>
+	<div class='modal-action'>
+	  <label class='interface-button-label'>New project..<button id='createProjBtn'></button></label>
+	</div>
+	<div class='modal-action'>
+	  <label class='interface-button-label disabled'>Open project..<button id='openProjBtn' disabled></button></label>
+	</div>
+      </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="newProjModal" class="modal-screen">
+      <!-- Modal content -->
+      <div class="modal-box">
+	<div class='modal-content'>
+	  <p>Workspace size in pixels. 3840x2160 (4K) is max</p>
+	  <label for='ratio'><b>Aspect Ratio: </b></label>
+	  <select class='interface-select' name='ratio' id='workspaceAR'>
+	    <option value='custom'>Custom</option>
+	    <option value='1:1'>1:1</option>
+	    <option value='4:3'>4:3</option>
+	    <option value='3:2'>3:2</option>
+	    <option value='16:9'>16:9</option>
+	  </select>
+	  <br>
+	  <br>
+	  <div>
+	    <label for='width'><b>Width:</b></label>
+	    <input type='text' class='interface-input-text' name='width' placeholder='Ex: 1920' id='workspaceW'>px
+	    <br><label for='height'><b>Height:</b></label>
+	    <input type='text' class='interface-input-text' name='height' placeholder='Ex: 1080' id='workspaceH'>px
+	  </div>
+	  <br>
+	</div>
+	<div class='modal-action' style='width:10%'>
+	  <label class='interface-button-label'><input type="file" id='createFromImgBtn' accept="image/*,.pdf"><img class='icon' src='img/import-image-icon.png' alt='Create from image'</label>
+	</div>
+	<div class='modal-action'>
+	  <label class='interface-button-label disabled'>OK<button id='acceptProjBtn' disabled></button></label>
+	</div>
+	<div class='modal-action'>
+	  <label class='interface-button-label'>Cancel<button id='returnToOpBtn'></button></label>
+	</div>
+      </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="exportModal" class="modal-screen">
+      <!-- Modal content -->
+      <div class="modal-box">
+	<div class='modal-content'>
+	  <p>Select an image format to export. PNG and JPEG are only supported currently</p>
+	  <label for='exportType'><b>Type: </b></label>
+	  <select id='exportType' name='exportType' required>
+	    <option value='png'>PNG</option>
+	    <option value='jpeg'>JPEG/JPG</option>
+	  </select>
+	  <br>
+	</div>
+	<div class='modal-action'>
+	  <label class='interface-button-label'>Export<button id='acceptExportBtn'></button></label>
+	</div>
+	<div class='modal-action'>
+	  <label class='interface-button-label'>Cancel<button id='returnToProjBtn'></button></label>
+	</div>
+      </div>
+    </div>
+
+  </body>
+  <script src=js/soie.js></script>
+</html>
