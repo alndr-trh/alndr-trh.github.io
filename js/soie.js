@@ -1,5 +1,6 @@
 // TODO
 // иконки мыши, рефакторинг, относительный размер рамки выделения изображения, взаимодействие со слоями  и вне холста (перетаскивание изображения за видимую область, непрерывное рисование и т.п.), убрать черную линию по-середине на фоне создания проекта
+// артефакты на новом слое (или виртуальном?) при дублированиии слоя изображения
 
 let workspaceWidth = 0;
 let workspaceHeight = 0;
@@ -152,12 +153,25 @@ function setupProject(firstLayerType) {
     layers[0].ctx.lineWidth = brushSize.value;
     layers[1].ctx.lineWidth = brushSize.value;
 
-    setDrawColor('#000000');
 
+    workspaceScale = Math.min(window.innerWidth / workspaceWidth,
+			      window.innerHeight / workspaceHeight);
+    zoomWorkspace({deltaY: 0});
+    
+    //setDrawColor('#000000');
+    setDrawColor(cp.value);
+    
     document.getElementById('brsVal').innerHTML = 'Size in pixels: ' + brushSize.value;
     document.getElementById('brtVal').innerHTML = 'Transparecy: ' + brushTransp.value;
     document.getElementById('brhVal').innerHTML = 'Shadowness: ' + Math.trunc(brushShad.value / 30.0 * 100.0) + '%';
-    document.getElementById('brightVal').innerHTML = 'Brightness: ' + brightness.value;
+    
+    document.getElementById('hueVal').innerHTML = 'Hue: ' +
+	(hue.value >= 0 ? '+' + hue.value : hue.value)  + '°';
+    document.getElementById('satVal').innerHTML = 'Saturation: ' +
+	(saturation.value >= 0 ? '+' + saturation.value : saturation.value) + '%';
+    document.getElementById('lightVal').innerHTML = 'Lightness: ' +
+	(lightness.value >= 0 ? '+' + lightness.value : lightness.value)  + '%';
+
     document.getElementById('contrVal').innerHTML = 'Contrast: ' + contrast.value;
     document.getElementById('expVal').innerHTML = 'Exposure: ' + (parseInt(exposure.value, 10) / 10.0).toString();
     document.getElementById('rLvlVal').innerHTML = 'Red level: ' + (parseInt(redLevel.value, 10)).toString();
@@ -168,7 +182,7 @@ function setupProject(firstLayerType) {
 
 // Scaling workspace
 function zoomWorkspace(e) {
-    workspaceScale += e.deltaY * -0.05;
+    workspaceScale += e.deltaY * -0.01;
     let sizeWidth = parseInt(Math.min(Math.max(workspaceWidth / 5.0, workspaceWidth * workspaceScale), workspaceWidth * 5), 10);
     let sizeHeight = parseInt(Math.min(Math.max(workspaceHeight / 5.0, workspaceHeight * workspaceScale), workspaceHeight * 5), 10);
     workspaceScale = Math.min(Math.max(0.2, workspaceScale), 5);
@@ -324,6 +338,7 @@ inputImg.onchange = function() {
     importImage.src = URL.createObjectURL(inputImg.files[0]);
     importImage.onload = function() {
 	addLayer('image');
+	//importImage.src = null;
 	importImage.onload = null;
     };
 };
@@ -462,7 +477,6 @@ function scaleImage(e) {
 	layers[currCanvIdx].img.width + 6 + rightDiff,
 	layers[currCanvIdx].img.height + 6 + bottomDiff);
     
-    
     diffX = tempX * layers[currCanvIdx].transform[0] + tempY * layers[currCanvIdx].transform[1]; //+ layers[currCanvIdx].transform[4];
     diffY = tempX * layers[currCanvIdx].transform[2] + tempY * layers[currCanvIdx].transform[3]; //+ layers[currCanvIdx].transform[5];
 
@@ -510,6 +524,7 @@ function scaleImage(e) {
 	}
     }
 
+    
     //layers[currCanvIdx].transform[0] = (layers[currCanvIdx].img.width + diffX) / layers[currCanvIdx].img.width;
     //layers[currCanvIdx].transform[3] = (layers[currCanvIdx].img.height + diffY) / layers[currCanvIdx].img.height;
     
@@ -694,6 +709,90 @@ function releaseImage(e) {
     //layers[currCanvIdx].ctx.resetTransform();
 }
 
+function clamp(min, x, max) {
+    return Math.min(Math.max(min, x), max);
+}
+
+function rgbToHsl(r, g, b) {
+    let rt = r/255.0;
+    let gt = g/255.0;
+    let bt = b/255.0;
+
+    let max = Math.max(rt, Math.max(gt, bt));
+    let min = Math.min(rt, Math.min(gt, bt));
+
+    let d = max - min;
+
+    let h = 0.0;
+    if(d == 0) {
+	h = 0;
+    }
+    else if(max == rt) {
+	h = 60.0 * (((gt - bt)/d) % 6);
+    }
+    else if(max == gt) {
+	h = 60.0 * ((bt - rt)/d + 2);
+    }
+    else if(max == bt) {
+	h = 60.0 * ((rt - gt)/d + 4);
+    }
+
+    let l = 0.0;
+    l = (max + min) / 2.0;
+
+    let s = 0.0;
+    if(d == 0) {
+	s = 0.0;
+    }
+    else {
+	s = d / (1.0 - Math.abs(2.0*l - 1.0));
+    }
+
+    return [h, s, l];
+}
+
+function hslToRgb(h, s, l) {
+    let c = (1.0 - Math.abs(2.0*l - 1)) * s;
+
+    let x = c * (1.0 - Math.abs(((h/60.0)%2)-1));
+
+    let m = l - c/2.0;
+
+    let rt, gt, bt;
+    if(h < 60) {
+	rt = c;
+	gt = x;
+	bt = 0.0;
+    }
+    else if(h < 120) {
+	rt = x;
+	gt = c;
+	bt = 0;
+    }
+    else if(h < 180) {
+	rt = 0;
+	gt = c;
+	bt = x;
+    }
+    else if(h < 240) {
+	rt = 0;
+	gt = x;
+	bt = c;
+    }
+    else if(h < 300) {
+	rt = x;
+	gt = 0;
+	bt = c;
+    }
+    else {
+	rt = c;
+	gt = 0;
+	bt = x;
+    }
+
+    return [(rt + m) * 255, (gt + m) * 255, (bt + m) * 255];
+}
+
 document.getElementById('invClrBtn').onclick = function() {
     layers[currCanvIdx].effects.isInverted = !(layers[currCanvIdx].effects.isInverted);
     applyEffects();
@@ -730,21 +829,37 @@ function adjustOpacity() {
     document.getElementById('opVal').innerHTML = 'Opacity: ' + op.toString() + '%';
 }
 
-let brightness = document.getElementById('brightness');
-brightness.onchange = applyEffects;
-function adjustBrightness() {
+let hue = document.getElementById('hue');
+hue.onchange = applyEffects;
+let saturation = document.getElementById('saturation');
+saturation.onchange = applyEffects;
+let lightness = document.getElementById('lightness');
+lightness.onchange = applyEffects;
+
+function adjustHsl() {
     let imgData = layers[currCanvIdx].imgCtx.getImageData(0, 0, layers[currCanvIdx].imgCvs.width, layers[currCanvIdx].imgCvs.height);
-    let br = parseInt(brightness.value, 10);
-    let factor = 255 * br / 100.0;
+    let h = parseInt(hue.value, 10);
+    let sat = parseInt(saturation.value, 10) / 100.0;
+    let lig = parseInt(lightness.value, 10) / 100.0;
+
     for(let i = 0; i < imgData.data.length; i += 4) {
-	imgData.data[i] += factor;
-	imgData.data[i+1] += factor;
-	imgData.data[i+2] += factor;
+	let hsl = rgbToHsl(imgData.data[i], imgData.data[i+1], imgData.data[i+2]);
+	[imgData.data[i], imgData.data[i+1], imgData.data[i+2]] = hslToRgb(clamp(0, (hsl[0] + h + 359) % 359, 359),
+									   clamp(0, hsl[1] + hsl[1]*sat, 1),
+									   clamp(0, hsl[2] + hsl[2]*lig, 1));
     }
+
     layers[currCanvIdx].imgCtx.clearRect(0, 0, layers[currCanvIdx].imgCvs.width, layers[currCanvIdx].imgCvs.height);
     layers[currCanvIdx].imgCtx.putImageData(imgData, 0, 0);
-    layers[currCanvIdx].effects.brightness = br;
-    document.getElementById('brightVal').innerHTML = 'Brightness: ' + br;
+    layers[currCanvIdx].effects.hue = hue.value;
+    layers[currCanvIdx].effects.saturation = saturation.value;
+    layers[currCanvIdx].effects.lightness = lightness.value;
+    document.getElementById('hueVal').innerHTML = 'Hue: ' +
+	(hue.value >= 0 ? '+' + hue.value : hue.value)  + '°';
+    document.getElementById('satVal').innerHTML = 'Saturation: ' +
+	(saturation.value >= 0 ? '+' + saturation.value : saturation.value) + '%';
+    document.getElementById('lightVal').innerHTML = 'Lightness: ' +
+	(lightness.value >= 0 ? '+' + lightness.value : lightness.value)  + '%';
 }
 
 let contrast = document.getElementById('contrast');
@@ -859,15 +974,15 @@ function adjustBlueLevel() {
 }
 
 function applyEffects() {
-    adjustOpacity();
-    adjustBrightness();
-    adjustContrast();
-    adjustExposure();
+    invertColors();
     adjustRedLevel();
     adjustGreenLevel();
     adjustBlueLevel();
-    invertColors();
-
+    adjustHsl();
+    adjustContrast();
+    adjustExposure();
+    adjustOpacity();
+    
     //TODO
     //сделать правильное убирание и появление выделений, интерфейс и курсоры по возможности, или вообще убрать их пока, а также доделать изменение местами слоев
     
@@ -952,6 +1067,8 @@ function setDrawColor(color) {
     cpVal.onmousedown = function() { return false };
 };
 
+setDrawColor(cp.value);
+
 var brushShad = document.getElementById('brushShad');
 brushShad.oninput = function() {
     applyBrushStyle();
@@ -961,6 +1078,7 @@ brushShad.oninput = function() {
 
 // Layering
 document.getElementById('newLayerBut').onclick = function(e) {
+    importImage.src = '';
     addLayer('drawing');
 };
 
@@ -981,14 +1099,18 @@ function selectLayer(id) {
 
 	    invClrBtn.parentNode.classList.add('disabled');
 	    opacity.classList.remove('interface-range');
-	    brightness.classList.remove('interface-range');
+	    hue.classList.remove('interface-range');
+	    saturation.classList.remove('interface-range');
+	    lightness.classList.remove('interface-range');
 	    contrast.classList.remove('interface-range');
 	    exposure.classList.remove('interface-range');
 	    rLvl.classList.remove('interface-range');
 	    gLvl.classList.remove('interface-range');
 	    bLvl.classList.remove('interface-range');
 	    opacity.classList.add('interface-range-disabled');
-	    brightness.classList.add('interface-range-disabled');
+	    hue.classList.add('interface-range-disabled');
+	    saturation.classList.add('interface-range-disabled');
+	    lightness.classList.add('interface-range-disabled');
 	    contrast.classList.add('interface-range-disabled');
 	    exposure.classList.add('interface-range-disabled');
 	    rLvl.classList.add('interface-range-disabled');
@@ -997,7 +1119,9 @@ function selectLayer(id) {
 
 	    invClrBtn.disabled = true;
 	    opacity.disabled = true;
-	    brightness.disabled = true;
+	    hue.disabled = true;
+	    saturation.disabled = true;
+	    lightness.disabled = true;
 	    contrast.disabled = true;
 	    exposure.disabled = true;
 	    rLvl.disabled = true;
@@ -1058,14 +1182,18 @@ function selectLayer(id) {
 	    
 	    invClrBtn.parentNode.classList.remove('disabled');
 	    opacity.classList.add('interface-range');
-	    brightness.classList.add('interface-range');
+	    hue.classList.add('interface-range');
+	    saturation.classList.add('interface-range');
+	    lightness.classList.add('interface-range');
 	    contrast.classList.add('interface-range');
 	    exposure.classList.add('interface-range');
 	    rLvl.classList.add('interface-range');
 	    gLvl.classList.add('interface-range');
 	    bLvl.classList.add('interface-range');
 	    opacity.classList.remove('interface-range-disabled');
-	    brightness.classList.remove('interface-range-disabled');
+	    hue.classList.remove('interface-range-disabled');
+	    saturation.classList.remove('interface-range-disabled');
+	    lightness.classList.remove('interface-range-disabled');
 	    contrast.classList.remove('interface-range-disabled');
 	    exposure.classList.remove('interface-range-disabled');
 	    rLvl.classList.remove('interface-range-disabled');
@@ -1074,20 +1202,31 @@ function selectLayer(id) {
 
 	    invClrBtn.disabled = false;
 	    opacity.disabled = false;
-	    brightness.disabled = false;
+	    hue.disabled = false;
+	    saturation.disabled = false;
+	    lightness.disabled = false;
 	    contrast.disabled = false;
 	    exposure.disabled = false;
 	    rLvl.disabled = false;
 	    gLvl.disabled = false;
 	    bLvl.disabled = false;
 	    opacity.value = layers[currCanvIdx].effects.opacity;
-	    brightness.value = layers[currCanvIdx].effects.brightness;
+	    hue.value = layers[currCanvIdx].effects.hue;
+	    saturation.value = layers[currCanvIdx].effects.saturation;
+	    lightness.value = layers[currCanvIdx].effects.lightness;
 	    contrast.value = layers[currCanvIdx].effects.contrast;
 	    exposure.value = layers[currCanvIdx].effects.exposure;
 	    rLvl.value = layers[currCanvIdx].effects.redLevel;
 	    gLvl.value = layers[currCanvIdx].effects.greenLevel;
 	    bLvl.value = layers[currCanvIdx].effects.blueLevel;
-	    document.getElementById('brightVal').innerHTML = 'Brightness: ' + brightness.value;
+
+	    document.getElementById('hueVal').innerHTML = 'Hue: ' +
+		(hue.value >= 0 ? '+' + hue.value : hue.value)  + '°';
+	    document.getElementById('satVal').innerHTML = 'Saturation: ' +
+		(saturation.value >= 0 ? '+' + saturation.value : saturation.value) + '%';
+	    document.getElementById('lightVal').innerHTML = 'Lightness: ' +
+		(lightness.value >= 0 ? '+' + lightness.value : lightness.value)  + '%';
+
 	    document.getElementById('contrVal').innerHTML = 'Contrast: ' + contrast.value;
 	    document.getElementById('expVal').innerHTML = 'Exposure: ' + (parseInt(exposure.value, 10) / 10.0).toString();
 	    document.getElementById('rLvlVal').innerHTML = 'Red level: ' + (parseInt(rLvl.value, 10)).toString();
@@ -1138,14 +1277,14 @@ function getLayerIdxById(id) {
     return idx;
 }
 
-function addLayer(type) {
-    layers.push(createLayer(type));
+function addLayer(type, xPos = 0, yPos = 0, transform = null, effects = null) {
+    layers.push(createLayer(type, xPos, yPos, transform, effects));
     box.appendChild(layers[layers.length-1].cvs);
     selectLayer(layers[layers.length-1].cvs.id);
     refreshThumbnail(layers.length-1);
 }
 
-function createLayer(type) {
+function createLayer(type, xPos = 0, yPos = 0, transform = null, effects = null) {
     let cvs = document.createElement('canvas');
     let ctx = cvs.getContext('2d');
     cvs.id = (maxId++).toString();
@@ -1178,7 +1317,7 @@ function createLayer(type) {
     function createIconButton(onclickFunc, iconSrc, altName) {
 	let llabel = document.createElement('label');
 	//llabel.classList.add('interface-button-label');
-	llabel.style.width = '23%';
+	llabel.style.width = '18%';
 	llabel.onclick = onclickFunc;
 	let lblicon = document.createElement('img');
 	lblicon.src = iconSrc;
@@ -1191,9 +1330,10 @@ function createLayer(type) {
     listElem.appendChild(document.createElement('br'));
     let btnGroup = document.createElement('div');
     btnGroup.classList.add('interface-button-group');
-    btnGroup.appendChild(createIconButton(moveLayerUp, 'img/arrow-up-icon.png', 'up'));
     btnGroup.appendChild(createIconButton(toggleLayerHideness, 'img/eye-icon.png', 'show/hide'));
+    btnGroup.appendChild(createIconButton(moveLayerUp, 'img/arrow-up-icon.png', 'up'));
     btnGroup.appendChild(createIconButton(moveLayerDown, 'img/arrow-down-icon.png', 'down'));
+    btnGroup.appendChild(createIconButton(duplicateLayer, 'img/dup-icon.png', 'duplicate'));
     btnGroup.appendChild(createIconButton(removeLayer, 'img/cross-icon.png', 'remove'));
     listElem.appendChild(btnGroup);
     listElem.appendChild(document.createElement('br'));
@@ -1206,8 +1346,6 @@ function createLayer(type) {
     let imgCvs = null;
     let imgCtx = null;
     let imd = null;
-    let xPos = 0;
-    let yPos = 0;
 
     if(type == 'image') {
 	img = new Image();
@@ -1218,11 +1356,31 @@ function createLayer(type) {
 	imgCvs.height = img.height;
 	imgCtx.drawImage(img, 0, 0);
 	imd = imgCtx.getImageData(0, 0, imgCvs.width.toFixed(2), imgCvs.height.toFixed(2));
-	xPos = (workspaceWidth - img.width) / 2;
-	yPos = (workspaceHeight - img.height) / 2;
+	if(effects == null) {
+	    xPos = (workspaceWidth - img.width) / 2;
+	    yPos = (workspaceHeight - img.height) / 2;
+	    transform = [ 1, 0, 0, 1, 0, 0 ];
+	    effects = {
+		isInverted: false,
+		opacity: 100,
+		hue: 0,
+		saturation: 0,
+		lightness: 0,
+		contrast: 0,
+		exposure: 0,
+		redLvl: 0,
+		greenLvl: 0,
+		blueLvl: 0
+	    };
+	}
 	ctx.drawImage(img, xPos, yPos);
 
 	imgCtx.imageSmoothingEnabled = false;
+    }
+    else if(type == 'drawing') {
+	if(importImage.src != '') {
+	    ctx.drawImage(importImage, 0, 0);
+	}
     }
     ctx.imageSmoothingEnabled = false;
     
@@ -1239,19 +1397,81 @@ function createLayer(type) {
 	yPos,
 	//TODO
 	//snapshots: [],
-	transform: [ 1, 0, 0, 1, 0, 0 ],
-	effects: {
-	    isInverted: false,
-	    opacity: 100,
-	    brightness: 0,
-	    contrast: 0,
-	    exposure: 0,
-	    redLvl: 0,
-	    greenLvl: 0,
-	    blueLvl: 0
-	}
+	transform,
+	effects
     };
 };
+
+function redrawLayer(lyrIdx) {
+    if(layers[lyrIdx] == 'image') {
+	layers[lyrIdx].ctx.setTransform([ 1, 0, 0, 1, 0, 0 ]);
+	layers[lyrIdx].ctx.clearRect(0, 0, layers[lyrIdx].cvs.width, layers[lyrIdx].cvs.height);
+	
+	layers[lyrIdx].ctx.setTransform(
+	    layers[lyrIdx].transform[0],
+	    layers[lyrIdx].transform[1],
+	    layers[lyrIdx].transform[2],
+	    layers[lyrIdx].transform[3],
+	    layers[lyrIdx].transform[4],
+	    layers[lyrIdx].transform[5]);
+
+	layers[lyrIdx].ctx.drawImage(
+	    layers[lyrIdx].img,
+	    -layers[lyrIdx].img.width/2,
+	    -layers[lyrIdx].img.height/2,
+	    layers[lyrIdx].img.width,
+	    layers[lyrIdx].img.height);
+
+	refreshThumbnail(lyrIdx);
+
+	layers[0].ctx.setTransform([ 1, 0, 0, 1, 0, 0 ]);
+	layers[0].ctx.clearRect(0, 0, layers[0].cvs.width, layers[0].cvs.height);
+
+	layers[0].ctx.setTransform(
+	    layers[lyrIdx].transform[0],
+	    layers[lyrIdx].transform[1],
+	    layers[lyrIdx].transform[2],
+	    layers[lyrIdx].transform[3],
+	    layers[lyrIdx].transform[4],
+	    layers[lyrIdx].transform[5]);
+
+	layers[0].ctx.setLineDash([4, 2]);
+	layers[0].ctx.lineWidth = 3;
+	layers[0].ctx.strokeStyle = '#000000FF';
+	layers[0].ctx.strokeRect(
+	    -layers[lyrIdx].img.width/2,
+	    -layers[lyrIdx].img.height/2,
+	    layers[lyrIdx].img.width,
+	    layers[lyrIdx].img.height);
+    }
+}
+
+function duplicateLayer(e) {
+    let idx = getLayerIdxById(parseInt(this.parentNode.parentNode.id, 10));
+
+    if(layers[idx].type == 'image') {
+	importImage.src = layers[idx].imgCvs.toDataURL('image/png');
+
+	importImage.onload = function() {
+	    addLayer('image', layers[idx].xPos, layers[idx].yPos, [...layers[idx].transform], {...layers[idx].effects});
+	    layers[currCanvIdx].img.width = layers[idx].img.width;
+	    layers[currCanvIdx].img.height = layers[idx].img.height;
+	    applyEffects();
+	    redrawLayer(currCanvIdx);
+	    //importImage.src = null;
+	    importImage.onload = null;
+	};
+    }
+    else if(layers[idx].type == 'drawing') {
+	importImage.src = layers[idx].cvs.toDataURL('image/png');
+
+	importImage.onload = function() {
+	    addLayer('drawing');
+	    //importImage.src = null;
+	    importImage.onload = null;
+	};
+    }
+}
 
 function removeLayer(e) {
     if(layers.length > 2) {

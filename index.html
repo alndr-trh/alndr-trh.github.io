@@ -7,19 +7,22 @@
   <body>
     <div class='content-container'>
       <div class='welcome-text'>
-	<p class='little-text'>Welcome to</p>
-	<p class='name-text'>Alexandr Terekhov's <label class='beauti-text'>Portfolio</label></p>
-	<p class='little-text'>Here is some of my projects</p>
+	<div style='grid-area: text'>
+	  <p class='little-text'>Welcome to</p>
+	  <p class='name-text'>Alexandr Terekhov's <label class='beauti-text'>Portfolio</label></p>
+	  <p class='little-text'>Here is some of my projects</p>
+	</div>
       </div>
       <div class='projects-container'>
-	<div class='project project-further' style='grid-area:blog-proj;'>
+	<div class='project project-further' id='blog' style='grid-area:blog-proj;'>
 	  <p class='project-name'>Youtube blog</p>
 	</div>
-	<div class='project project-further' style='grid-area:game-proj;'>
+	<div class='project project-further' id='game' style='grid-area:game-proj;'>
 	  <p class='project-name'>zastroyka</p>
 	</div>
-	<div class='project project-further' id='soie' style='grid-area:soie-proj; background-image: url(img/soie.png);'>
+	<div class='project project-further' id='soie' style='grid-area:soie-proj;'>
 	  <p class='project-name'>SOIE</p>
+	  <div class='project-description'><p>Simple Online Image Editor.</p><br><p>Brush, flood fill, erase tools.</p><p>Image import and enchancement tools.</p><p>Layering and export features.</p></div>
 	</div>
       </div>
     </div>

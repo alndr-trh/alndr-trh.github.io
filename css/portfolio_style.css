@@ -1,34 +1,77 @@
+@font-face {
+    font-family: Roboto;
+    src: url(../font/Roboto-Regular.ttf);
+}
+
+@font-face {
+    font-family: Roboto;
+    src: url(../font/Roboto-BlackItalic.ttf);
+    font-weight: bold;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: Roboto;
+    src: url(../font/Roboto-Black.ttf);
+    font-weight: bold;
+}
+
+@font-face {
+    font-family: Roboto;
+    src: url(../font/Roboto-Italic.ttf);
+    font-style: italic;
+}
+
+@font-face {
+    font-family: Roboto;
+    src: url(../font/Roboto-Light.ttf);
+    font-weight: light;
+}
+
 html, body {
     width: 100%;
     height: 100%;
     margin: 0;
     position: fixed;
     font-size: 100%;
+    font-family: Roboto;
+    
+    -webkit-user-select: none;  
+    -moz-user-select: none;    
+    -ms-user-select: none;      
+    user-select: none;
 }
 
 .content-container {
-    width: 80%;
+    width: 100%;
     height: 100%;
     margin: auto;
     display: grid;
-    grid-template-rows: 1fr 1fr 5fr 0.5fr;
+    grid-template-rows: 1fr 3fr;
     grid-template-columns: 100%;
     grid-template-areas:
-	"."
 	"welcome-text"
-	"projects"
-	".";
+	"projects";
 }
 
 .welcome-text {
-    display: inline;
-    vertical-align: middle;
+    width: 100%;
+    height: 100%;
+    margin: auto;
     grid-area: welcome-text;
+    background-color: #001427;
+    color: #ebf5ff;
+    display: grid;
+    align-items: center;
+    grid-template-rows: 1fr;
+    grid-template-columns: 100%;
+    grid-template-areas:
+	"text";
 }
 
 .little-text {
     text-align: center;
-    font-size: 1rem;
+    font-size: 2rem;
     margin: 0;
 }
 
@@ -47,121 +90,72 @@ html, body {
 
 .projects-container {
     grid-area: projects;
-    display: grid;
-    grid-template-rows: auto;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-areas:
-	"blog-proj blog-proj game-proj game-proj"
-	". soie-proj soie-proj .";
+
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch; /* Important for iOS devices */
+
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE 10+ */
+}
+.projects-container::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; /* Chrome/Safari/Webkit */
 }
 
 .project-name {
+    grid-area: proj-name;
     font-weight: bold;
-    color: black;
+    margin: auto;
+    font-size: 8rem;
+}
+
+.project-description {
+    grid-area: proj-descr;
+    font-size: 2rem;
+    margin: auto;
+    text-align: center;
+    font-weight: light;
 }
 
 .project {
-    background-blend-mode: overlay;
-    display: flex;
+    height: 100%;
+    
+    display: grid;
     align-items: center;
-    justify-content: center;
+    grid-template-rows: 1fr 3fr;
+    grid-template-columns: 100%;
+    grid-template-areas:
+	"proj-name"
+	"proj-descr";
+    
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
 }
 
-@keyframes float-bg {
-    from {
-	background-position: 15% 15%;
-    }
-    to {
-	background-position: 85% 85%;
-    }
+#blog {
+    background-color: #bf0603;
+    color: #ebf5ff;
 }
 
-.project-further {
-    background-size: 150%;
-    animation-duration: 0.3s, 10s;
-    animation-name: furhter, float-bg;
-    animation-iteration-count: 1, infinite;
-    animation-direction: normal, alternate;
-    margin: auto;
-    border: 1px solid black;
-    border-radius: 3px;
-    height: 80%;
-    width: 70%;
-    font-size: 1.6rem;
+#game {
+    background-color: #9C92A3;
+    color: #ebf5ff;
 }
 
-@keyframes furhter {
-    from {
-	height: 90%;
-	width: 80%;
-	font-size: 4rem;
-	background-size: 100%;
-    }
-    to {
-	height: 80%;
-	width: 70%;
-	font-size: 1.6rem;
-	background-size: 150%;
-    }	
+#soie {
+    background-color: #0F7173;
+    color: #ebf5ff;
 }
 
-.project-closer {
-    background-size: 100%;
-    animation-duration: 0.3s, 10s;
-    animation-name: closer, float-bg;
-    animation-iteration-count: 1, infinite;
-    animation-direction: normal, alternate;
-    margin: auto;
-    border: 1px solid black;
-    border-radius: 3px;
-    height: 90%;
-    width: 80%;
-    font-size: 4rem;
-}
-
-@keyframes closer {
-    from {
-	height: 80%;
-	width: 70%;
-	font-size: 1.6rem;
-	background-size: 150%;
-    }
-    to {
-	height: 90%;
-	width: 80%;
-	font-size: 4rem;
-	background-size: 100%;
-    }
-}
-
-@media (max-width: 765px) {
+@media (max-width: 1200px) {
     html, body {
-	font-size: 65%;
-    }
-    .content-container {
-	width: 90%;
-    }
-    .projects-container {
-	grid-template-rows: 1fr 1fr 1fr;
-	grid-template-columns: auto;
-	grid-template-areas:
-	    "blog-proj"
-	    "game-proj"
-	    "soie-proj";
+	font-size: 125%;
     }
 }
 
-@media (max-height: 600px) and (min-width: 766px) {
+@media (max-height: 950px) {
     html, body {
-	font-size: 65%;
-    }
-    .content-container {
-	width: 90%;
-    }
-    .projects-container {
-	grid-template-rows: auto;
-	grid-template-columns: 1fr 1fr 1fr;
-	grid-template-areas:
-	    "blog-proj game-proj soie-proj";
+	font-size: 75%;
     }
 }

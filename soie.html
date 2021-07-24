@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>SOIE</title>
     <link rel="stylesheet" href="css/soie_style.css">
   </head>
@@ -44,12 +45,19 @@
 	  <label class='interface-button-label'>Invert colors<button id='invClrBtn'></button></label>
 	  <p class='interface-range-value' id='opVal'>Opacity: 100%</p>
 	  <input type='range' class='interface-range' id='opacity' min='0' max='100' value='100'>
-	  <p class='interface-range-value' id='brightVal'>Brightness: 0</p>
-	  <input type='range' class='interface-range' id='brightness' min='-100' max='100' value='0'>
+
+	  <p class='interface-range-value' id='hueVal'>Hue: +0°</p>
+	  <input type='range' class='interface-range' id='hue' min='-180' max='180' value='0'>
+	  <p class='interface-range-value' id='satVal'>Saturation: +0%</p>
+	  <input type='range' class='interface-range' id='saturation' min='-100' max='100' value='0'>
+	  <p class='interface-range-value' id='lightVal'>Lightness: +0%</p>
+	  <input type='range' class='interface-range' id='lightness' min='-100' max='100' value='0'>
+	  
 	  <p class='interface-range-value' id='contrVal'>Contrast: 0</p>
 	  <input type='range' class='interface-range' id='contrast' min='-100' max='100' value='0'>
 	  <p class='interface-range-value' id='expVal'>Exposure: 0</p>
 	  <input type='range' class='interface-range' id='exposure' min='-30' max='30' value='0'>
+	  
 	  <p class='interface-range-value' id='rLvlVal'>Red level: 0</p>
 	  <input type='range' class='interface-range' id='rLvl' min='-100' max='100' value='0'>
 	  <p class='interface-range-value' id='gLvlVal'>Green level: 0</p>
